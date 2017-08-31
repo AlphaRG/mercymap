@@ -1,0 +1,184 @@
+//
+//  ShopCommentCell.m
+//  MercyMap
+//
+//  Created by zhangshupeng on 16/8/25.
+//  Copyright © 2016年 Wispeed. All rights reserved.
+//
+
+#import "ShopCommentCell.h"
+#import "Masonry.h"
+#import "UIButton+WebCache.h"
+#define IMAGEWIDTH (kSCREENWIDTH-75-15)/4
+@implementation ShopCommentCell
+
+- (instancetype)initWithStyle:(UITableViewCellStyle)style reuseIdentifier:(NSString *)reuseIdentifier {
+    if (self = [super initWithStyle:style reuseIdentifier:reuseIdentifier]) {
+        [self.contentView addSubview:self.head];
+        [self.contentView addSubview:self.name];
+        [self.contentView addSubview:self.comment];
+        [self.contentView addSubview:self.info];
+        [self.contentView addSubview:self.pictureView];
+        [self.contentView addSubview:self.time];
+        [self.contentView setNeedsUpdateConstraints];
+    }
+    return self;
+}
+
+- (void)configData:(id)data {
+    NSString *Imgstr;
+    for (UIView *view in self.pictureView.subviews) {
+        [view removeFromSuperview];
+    }
+        self.comment.hidden  = YES;
+    if ([data[@"HeadImg"] rangeOfString:@"http"].length>0)  {
+          Imgstr=[data[@"HeadImg"] stringByAddingPercentEncodingWithAllowedCharacters:[NSCharacterSet URLFragmentAllowedCharacterSet]];
+    }else{
+        NSString *str = [NSString stringWithFormat:@"%@/%@",IMGURL,data[@"HeadImg"]];
+        Imgstr = [str stringByAddingPercentEncodingWithAllowedCharacters:[NSCharacterSet URLFragmentAllowedCharacterSet]];
+       }
+        NSURL *url = [NSURL URLWithString:Imgstr];
+        UIImage *image = [UIImage imageWithData:[NSData dataWithContentsOfURL:url]];
+        [self.head setImage:image forState:UIControlStateNormal];
+        [self.name setTitle:data[@"NickName"]  forState:UIControlStateNormal];
+        self.info.text = data[@"CommentInfo"];
+        self.time.text =[NSString stringWithFormat:@"%@ ·%d条回复>",data[@"CommentTIme"],[data[@"ReplyNum"] intValue]];
+        [self setImageInfo:data];
+        [self.time sizeToFit];
+        [self.info sizeToFit];
+        [self updateConstraintsIfNeeded];
+}
+
+-(void)setImageInfo:(id)data{
+            if (![data[@"Img1"]isKindOfClass:[NSNull class]]) {
+                _imgArray = [[NSMutableArray alloc]initWithCapacity:0];
+                for(int i =0 ; i<4;i++){
+                NSString *imgekey  = [NSString stringWithFormat:@"Img%d",i+1];
+                NSString *imagestr = [data objectForKey:imgekey];
+                  if (![imagestr isKindOfClass:[NSNull class]]) {
+                      UIButton *imageBtn = [[UIButton alloc]initWithFrame:CGRectMake(i*(IMAGEWIDTH+5), 0, IMAGEWIDTH, IMAGEWIDTH)];
+                      imageBtn.tag = i;
+                      [imageBtn addTarget:self action:@selector(btnClick) forControlEvents:UIControlEventTouchUpInside];
+                      NSString *Imgstr =[imagestr stringByAddingPercentEncodingWithAllowedCharacters:[NSCharacterSet URLFragmentAllowedCharacterSet]];
+                      NSURL *url = [NSURL URLWithString:[NSString stringWithFormat:@"%@/img/%@",URLM,Imgstr]];
+                      [imageBtn sd_setBackgroundImageWithURL:url forState:UIControlStateNormal];
+                      [_imgArray addObject:url];
+                      [self.pictureView addSubview:imageBtn];
+                   }
+                }
+        }else{
+        }
+}
+
+-(void)btnClick{
+    if ([self.delegate respondsToSelector:@selector(sendImgs:)]) {
+        [self.delegate sendImgs:_imgArray];
+    }
+}
+
+- (void)buttonClickAction:(UIButton *)button {
+    if ([self.delegate respondsToSelector:@selector(cell:InteractionEvent:)]) {
+        [self.delegate cell:self InteractionEvent:@(button.tag)];
+    }
+}
+
+- (void)updateConstraints {
+    [super updateConstraints];
+//  self.info.preferredMaxLayoutWidth = kSCREENWIDTH - 85;
+    [self.head mas_makeConstraints:^(MASConstraintMaker *make) {
+        make.left.mas_equalTo(self.contentView).offset(15);
+        make.size.mas_equalTo(CGSizeMake(30, 30));
+        make.top.mas_equalTo(self.contentView).offset(10);
+    }];
+    
+    [self.name mas_makeConstraints:^(MASConstraintMaker *make) {
+        make.left.mas_equalTo(self.head.mas_right).offset(10);
+        make.top.mas_equalTo(self.head.mas_top).offset(5);
+        make.height.mas_equalTo(20);
+    }];
+    
+    [self.comment mas_makeConstraints:^(MASConstraintMaker *make) {
+        make.right.mas_equalTo(self.contentView).offset(-20);
+        make.centerY.mas_equalTo(self.time.mas_centerY);
+    }];
+    
+    [self.info mas_makeConstraints:^(MASConstraintMaker *make) {
+        make.top.mas_equalTo(self.name.mas_bottom).offset(20);
+        make.left.mas_equalTo(self.name.mas_left);
+        make.right.mas_equalTo(self.contentView).offset(-20);
+    }];
+    
+    [self.pictureView mas_makeConstraints:^(MASConstraintMaker *make) {
+        make.top.mas_equalTo(self.info.mas_bottom).offset(5);
+        make.bottom.mas_equalTo(self.time.mas_top).offset(5);
+        make.left.mas_equalTo(self.info.mas_left);
+        make.right.mas_equalTo(self.contentView).offset(-20);
+    }];
+
+    [self.time mas_makeConstraints:^(MASConstraintMaker *make) {
+        make.left.mas_equalTo(self.name.mas_left);
+        make.height.mas_equalTo(20);
+        make.bottom.mas_equalTo(self.contentView).offset(-10);
+    }];
+}
+
+- (UIButton *)head {
+    if (_head == nil) {
+        _head = [UIButton buttonWithType:0];
+        _head.tag = 1;
+        [_head addTarget:self action:@selector(buttonClickAction:) forControlEvents:UIControlEventTouchUpInside];
+        _head.layer.shouldRasterize = YES;
+        _head.clipsToBounds = YES;
+        _head.layer.cornerRadius = 15;
+        _head.backgroundColor = [UIColor redColor];
+    }
+    return _head;
+}
+
+- (UIButton *)comment {
+    if (_comment == nil) {
+        _comment = [UIButton buttonWithType:0];
+        _comment.tag = 3;
+        [_comment addTarget:self action:@selector(buttonClickAction:) forControlEvents:UIControlEventTouchUpInside];
+        [_comment setTitleColor:[UIColor colorWithRed:165/255.0 green:172/255.0 blue:182/255.0 alpha:1] forState:UIControlStateNormal];
+        _comment.titleLabel.font = [UIFont systemFontOfSize:12];
+    }
+    return _comment;
+}
+
+- (UIButton *)name {
+    if (_name == nil) {
+        _name = [UIButton buttonWithType:0];
+        [_name setTitleColor:[UIColor colorWithRed:113/255.0 green:130/255.0 blue:164/255.0 alpha:1.0] forState:UIControlStateNormal];
+        _name.titleLabel.font = [UIFont systemFontOfSize:12];
+        _name.tag = 2;
+        [_name addTarget:self action:@selector(buttonClickAction:) forControlEvents:UIControlEventTouchUpInside];
+    }
+    return _name;
+}
+
+- (UILabel *)time {
+    if (_time == nil) {
+        _time = [[UILabel alloc]init];
+        _time.textColor = [UIColor colorWithRed:165/255.0 green:172/255.0 blue:182/255.0 alpha:1.0];
+        _time.font = [UIFont systemFontOfSize:10];
+    }
+    return _time;
+}
+
+- (UILabel *)info {
+    if (_info == nil) {
+        _info = [[UILabel alloc]init];
+        _info.numberOfLines = 0;
+        _info.font = [UIFont systemFontOfSize:14];
+    }
+    return _info;
+}
+
+-(UIView *)pictureView{
+    if (_pictureView ==nil) {
+        _pictureView = [[UIView alloc]init];
+    }
+    return _pictureView;
+}
+@end

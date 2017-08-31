@@ -1,0 +1,311 @@
+//
+//  MapViewSet.m
+//  MercyMap
+//
+//  Created by sunshaoxun on 16/5/25.
+//  Copyright © 2016年 Wispeed. All rights reserved.
+#import "MapViewSet.h"
+#import "MapViewModel.h"
+#import<MAMapKit/MAMapKit.h>
+
+@implementation MapViewSet
+
+-(void)setLocationView:(MAMapView *)mapview selfView:(UIViewController*)selfView dataArray:(NSMutableArray *)dataArray{
+     comeView =selfView;
+    _mapView = mapview;
+    _mapView.delegate = self;
+    _mapView.mapType = MAMapTypeStandard;
+    _mapView.showsUserLocation = YES;
+    _mapView.userTrackingMode = MAUserTrackingModeFollow;
+    [_mapView setZoomLevel:16.1 animated:YES];
+    for(int i =0;i<dataArray.count;i++){
+        if (![dataArray[i][@"ShopGPS"]isKindOfClass:[NSNull class]]){
+            MapViewModel *annotation = [[MapViewModel alloc] init];
+            NSString *str =dataArray[i][@"ShopGPS"];
+            NSArray *array = [str componentsSeparatedByString:@","];
+            annotation.title =dataArray[i][@"ShopName"];
+            annotation.subtitle =dataArray[i][@"ShopAddr"];
+            NSInteger index = [dataArray[i][@"ShopFlag"] intValue];
+            switch (index) {
+                case 1:
+                    annotation.image = [UIImage imageNamed:@"dessert"];
+                    break;
+                 case 2:
+                    annotation.image = [UIImage imageNamed:@"zhushi"];
+                    break;
+                case 3:
+                    annotation.image = [UIImage imageNamed:@"snack"];
+                    break;
+                case 4:
+                    annotation.image = [UIImage imageNamed:@"other"];
+                    break;
+                default:
+                    break;
+            }
+            float latitude = [array[0] floatValue];
+            float longitude =[array[1] floatValue];
+            annotation.coordinate =CLLocationCoordinate2DMake(latitude ,longitude);
+            [_mapView addAnnotation:annotation];
+        }
+    }
+}
+
+-(void)setcity{
+    [AMapLocationServices sharedServices].apiKey= @"8c136b29c6b5808b60128bf548dff050";
+    locationManager = [[AMapLocationManager alloc] init];
+    [locationManager setLocationTimeout:20];
+    [locationManager setReGeocodeTimeout:20];
+    locationManager.delegate = self;
+    [locationManager setDesiredAccuracy:kCLLocationAccuracyHundredMeters];
+    [locationManager setPausesLocationUpdatesAutomatically:YES];
+
+    [locationManager requestLocationWithReGeocode:YES completionBlock:^(CLLocation *location, AMapLocationReGeocode *regeocode, NSError *error) {
+        if (error){
+            NSLog(@"locError:{%ld - %@};", (long)error.code, error.localizedDescription);
+            if (error.code == AMapLocationErrorLocateFailed){
+                [self setcity];
+            }
+        }
+        if (location){
+            if (regeocode){
+                if (![regeocode.city isKindOfClass:[NSNull class]]){
+                    NSUserDefaults *defaults =[NSUserDefaults standardUserDefaults];
+                    [defaults removeObjectForKey:@"LocationCityName"];
+                    [defaults removeObjectForKey:@"LoccationAdress"];
+                    [defaults removeObjectForKey:@"Address"];
+                    NSString *locationAddress = [NSString stringWithFormat:@"%f,%f",location.coordinate.latitude,location.coordinate.longitude];
+                    [defaults setObject:locationAddress forKey:@"LocationAdress"];
+                    [defaults setObject:regeocode.province forKey:@"LocationCityName"];
+                    [defaults setObject:[NSString stringWithFormat:@"%@%@%@%@",regeocode.district,regeocode.township,regeocode.street,regeocode.AOIName] forKey:@"Address"];
+                }
+                else{
+                    NSUserDefaults *defaults =[NSUserDefaults standardUserDefaults];
+                    [defaults removeObjectForKey:@"Address"];
+                    [defaults setObject:[NSString stringWithFormat:@"%@%@%@%@",regeocode.district,regeocode.township,regeocode.street,regeocode.AOIName] forKey:@"Address"];
+                    [defaults removeObjectForKey:@"LocationCityName"];
+                    [defaults setObject:regeocode.city forKey:@"LocationCityName"];
+                    [defaults removeObjectForKey:@"LoccationAdress"];
+                    NSString *locationAddress = [NSString stringWithFormat:@"%f,%f",location.coordinate.longitude,location.coordinate.latitude];
+                    [defaults setObject:locationAddress forKey:@"LocationAdress"];
+                }
+            }
+            else{
+                //                [wSelf.Lightcity setText:[NSString stringWithFormat:@"lat:%f;lon:%f \n accuracy:%.2fm", location.coordinate.latitude, location.coordinate.longitude, location.horizontalAccuracy]];
+            }
+        }
+        
+    }];
+}
+
+//调用方法
+-(void)setLocationView:(MAMapView *)mapview selfView:(UIViewController*)selfView Category:(NSString *)catrgory Date:(int)dates How:(NSString *)how Who:(NSString *)who{
+     comeView =selfView;
+    _categoryStr = catrgory;
+    _dateStr     = dates;
+    _who         = who;
+    _how         = how;
+//    _mapView.mapType = MAMapTypeStandard;
+//    _mapView.showsUserLocation = YES;
+//    _mapView.userTrackingMode = MAUserTrackingModeFollow;
+//    [_mapView setZoomLevel:16.1 animated:YES];
+//    _mapView.customizeUserLocationAccuracyCircleRepresentation = YES;
+    _mapView = mapview;
+    _mapView.delegate = self;
+    [self getMapViewInfo];
+}
+
+//去除定位点圈照层
+- (MAOverlayView *)mapView:(MAMapView *)mapView viewForOverlay:(id <MAOverlay>)overlay{
+    if (overlay == mapView.userLocationAccuracyCircle){
+        MACircleView *accuracyCircleView = [[MACircleView alloc]initWithCircle:mapView.userLocationAccuracyCircle];
+        accuracyCircleView.lineWidth    = 2.f;
+        accuracyCircleView.strokeColor  = [UIColor colorWithRed:1 green:0 blue:0 alpha:0.0];
+        accuracyCircleView.fillColor    = [UIColor colorWithRed:1 green:0 blue:0 alpha:0.0];
+        return accuracyCircleView;
+    }
+    return nil;
+}
+
+//移动地图时获取信息
+-(void)mapView:(MAMapView *)mapView mapDidMoveByUser:(BOOL)wasUserAction{
+    if (wasUserAction) {
+        [self getMapViewInfo];
+    }else{
+        
+    }
+}
+
+- (MAAnnotationView *)mapView:(MAMapView *)mapView viewForAnnotation:(id<MAAnnotation>)annotation{
+    if (annotation == mapView.userLocation) {
+        MAAnnotationView *annotationView = [[MAAnnotationView alloc]initWithFrame:CGRectMake(0, 0, 0, 0)];
+        return annotationView;
+    }
+    if ([annotation isKindOfClass:[MapViewModel class]]){
+     static NSString *animatedAnnotationIdentifier = @"AnimatedAnnotationIdentifier";
+     MAPinAnnotationView  *annotationView = (MAPinAnnotationView  *)[mapView dequeueReusableAnnotationViewWithIdentifier:animatedAnnotationIdentifier];
+        if (annotationView == nil){
+            annotationView = [[MAPinAnnotationView  alloc] initWithAnnotation:annotation
+                                                                reuseIdentifier:animatedAnnotationIdentifier];
+            UIButton *rightButton   =   [UIButton buttonWithType:UIButtonTypeCustom];
+            rightButton.frame       =   CGRectMake(0, 0, 32, 32);
+            [rightButton setImage:[UIImage imageNamed:@"Go"] forState:UIControlStateNormal];
+            rightButton.layer.borderColor = [UIColor blackColor].CGColor;
+            rightButton.showsTouchWhenHighlighted   =   YES;
+            [rightButton addTarget:self action:@selector(rightBtnClick:view:fag:) forControlEvents:UIControlEventTouchUpInside];
+            fag =1;
+            annotationView.rightCalloutAccessoryView = rightButton;
+            annotationView.animatesDrop     = NO;
+            annotationView.canShowCallout   = YES;
+         }
+        /**
+         *  有可能从缓冲池里出来设置大头针视图的图片
+         */
+        annotationView.annotation=annotation;
+        annotationView.image=((MapViewModel *)annotation).image;
+        return annotationView;
+    }
+    return nil;
+}
+
+- (void)mapView:(MAMapView *)mapView didSelectAnnotationView:(MAAnnotationView *)view{
+    _Mapcoordinate =view.annotation.coordinate;
+}
+
+//导航
+-(void)rightBtnClick:(CLLocationCoordinate2D)mapCoordinate view:(UIViewController *)BackView fag:(int)fag1{
+    if (fag==1){
+        mapCoordinate = _Mapcoordinate;
+        BackView =comeView;
+    }
+    else{
+    }
+    UIAlertController *alterController = [UIAlertController alertControllerWithTitle:@"地图选择" message:@"支持苹果、百度、高德地图" preferredStyle:UIAlertControllerStyleActionSheet];
+    MapdataArray = [[NSMutableArray alloc]initWithCapacity:0];
+    [self checkInstallMapApps];
+    for (int i=0; i< MapdataArray.count; i++) {
+        UIAlertAction *MapAc =[UIAlertAction actionWithTitle:MapdataArray[i] style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action){
+            if ([MapdataArray[i]isEqualToString:@"苹果地图"]){
+                [self navAppleMap:mapCoordinate];
+            }
+            if ([MapdataArray[i]isEqualToString:@"高德地图"]){
+                 NSString *urlString = [[NSString stringWithFormat:@"iosamap://navi?sourceApplication=%@&backScheme=%@&lat=%f&lon=%f&dev=0&style=2",@"导航功能",@"mercyMap:wispeed",mapCoordinate.latitude,mapCoordinate.longitude]stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
+                [[UIApplication sharedApplication] openURL:[NSURL URLWithString:urlString]];
+            }
+            if ([MapdataArray[i]isEqualToString:@"百度地图"]){
+                NSString *urlString = [[NSString stringWithFormat:@"baidumap://map/direction?origin={{我的位置}}&destination=latlng:%f,%f|name=北京&mode=driving&coord_type=gcj02",_Mapcoordinate.latitude,_Mapcoordinate.longitude] stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
+                [[UIApplication sharedApplication] openURL:[NSURL URLWithString:urlString]];
+            }}];
+      [alterController addAction:MapAc];
+    }
+    UIAlertAction *canceAC =[UIAlertAction actionWithTitle:@"取消" style:UIAlertActionStyleCancel handler: nil];
+    [alterController addAction:canceAC];
+  [BackView presentViewController:alterController animated:YES completion:nil];
+}
+
+- (NSArray *)checkInstallMapApps{
+    NSArray *mapSchemeArr = @[@"iosamap://",@"baidumap://map/"];
+    NSMutableArray *appListArr = [[NSMutableArray alloc] initWithObjects:@"苹果地图", nil];
+    for (int i = 0; i < [mapSchemeArr count]; i++) {
+        if ([[UIApplication sharedApplication] canOpenURL:[NSURL URLWithString:[NSString stringWithFormat:@"%@",[mapSchemeArr objectAtIndex:i]]]]) {
+            if (i == 0){
+                [appListArr addObject:@"高德地图"];
+            }else if (i == 1){
+                [appListArr addObject:@"百度地图"];
+            }
+        }
+    }
+    MapdataArray = appListArr;
+    return MapdataArray;
+}
+
+- (void)navAppleMap:(CLLocationCoordinate2D)mapCoordinate{
+    MKMapItem *currentLoc = [MKMapItem mapItemForCurrentLocation];
+    MKMapItem *toLocation = [[MKMapItem alloc] initWithPlacemark:[[MKPlacemark alloc] initWithCoordinate:mapCoordinate addressDictionary:nil]];
+    NSArray *items = @[currentLoc,toLocation];
+    NSDictionary *dic = @{
+                          MKLaunchOptionsDirectionsModeKey : MKLaunchOptionsDirectionsModeDriving,
+                          MKLaunchOptionsMapTypeKey : @(MKMapTypeStandard),
+                          MKLaunchOptionsShowsTrafficKey : @(YES)
+                          };
+   [MKMapItem openMapsWithItems:items launchOptions:dic];
+}
+
+//获取信息
+-(void)getMapViewInfo{
+    NSDictionary *dic;
+    CGPoint pointTopLeft     = CGPointMake(20,100);
+    CGPoint pointTopright    = CGPointMake(kSCREENWIDTH-20, 100);
+    CGPoint pointBottomLeft  = CGPointMake(20,comeView.view.bounds.size.height-100);
+    CGPoint pointBottomRight = CGPointMake(kSCREENWIDTH,comeView.view.bounds.size.height-100);
+    CLLocationCoordinate2D maptopleft =
+    [_mapView convertPoint:pointTopLeft toCoordinateFromView:_mapView];
+    CLLocationCoordinate2D maptopright =[_mapView convertPoint:pointTopright toCoordinateFromView:_mapView];
+    CLLocationCoordinate2D mapbottomleft =[_mapView convertPoint:pointBottomLeft toCoordinateFromView:_mapView];
+    CLLocationCoordinate2D mapbottomright =[_mapView convertPoint:pointBottomRight toCoordinateFromView:_mapView];
+    NSString *topleft  = [NSString stringWithFormat:@"%f,%f",maptopleft.latitude,maptopleft.longitude];
+    NSString *topright = [NSString stringWithFormat:@"%f,%f",maptopright.latitude,maptopright.longitude];
+    NSString *bottomleft  = [NSString stringWithFormat:@"%f,%f",mapbottomleft.latitude,mapbottomleft.longitude];
+    NSString *bottomright = [NSString stringWithFormat:@"%f,%f",mapbottomright.latitude,mapbottomright.longitude];
+    NSString *location    = [NSString stringWithFormat:@"%@;%@;%@;%@",topleft,topright,bottomleft,bottomright];
+    NSNumber *index    = [NSNumber numberWithInt:0];
+    NSNumber *pageSize = [NSNumber numberWithInt:5000];
+    
+    NSNumber *_dateNum = [NSNumber numberWithInt:_dateStr];
+    dic = @{@"DateCount":_dateNum,@"ShopCategoryIDs":_categoryStr,@"LocationArea":location,@"pageIndex":index,@"pageSize":pageSize,@"How":_how,@"Who":_who};
+    [self serviceGetMapViewInfo:dic];
+}
+
+-(void)serviceGetMapViewInfo:(NSDictionary *)dic{
+    _service = [[LoginService alloc]init];
+    NSString *url = [NSString stringWithFormat:@"%@api/Shop/MapShopLight",URLM];
+    [_service getArrayData:dic Url:url Title:@"_IlistShopList" SuccessBlock:^(NSArray *modelArray) {
+        _mapDataArray = [NSMutableArray arrayWithCapacity:0];
+        [_mapDataArray removeAllObjects];
+        [_mapDataArray addObjectsFromArray:modelArray];
+        [self addAnnotation];
+    } FailuerBlock:^(NSString *str) {
+    }];
+}
+
+//添加大头针
+-(void)addAnnotation{
+    [_mapView removeAnnotations:_mapView.annotations];
+    for(int i =0;i<_mapDataArray.count;i++){
+        if (![_mapDataArray[i][@"ShopGPS"] isKindOfClass:[NSNull class]]){
+            MapViewModel *annotation = [[MapViewModel alloc] init];
+            NSString *str =_mapDataArray[i][@"ShopGPS"];
+            NSArray *array = [str componentsSeparatedByString:@","];
+            annotation.title =_mapDataArray[i][@"ShopName"];
+//          annotation.subtitle =_mapDataArray[i][@"ShopAddr"];
+            NSInteger index = [_mapDataArray[i][@"ShopCategoryID"] intValue];
+            switch (index) {
+                case 1:
+                    annotation.image = [UIImage imageNamed:@"dessert"];
+                    break;
+                case 2:
+                    annotation.image = [UIImage imageNamed:@"zhushi"];
+                    break;
+                case 3:
+                    annotation.image = [UIImage imageNamed:@"snack"];
+                    break;
+                case 4:
+                    annotation.image = [UIImage imageNamed:@"other"];
+                    break;
+                default:
+                    break;
+            }
+            float latitude  = [array[0] floatValue];
+            float longitude = [array[1] floatValue];
+            annotation.coordinate =CLLocationCoordinate2DMake(latitude ,longitude);
+            [_mapView addAnnotation:annotation];
+        }
+    }
+}
+
+-(NSMutableArray *)mapDataArray{
+    if (_mapDataArray == nil) {
+        _mapDataArray  = [[NSMutableArray alloc]initWithCapacity:0];;
+    }
+    return _mapDataArray;
+}
+@end

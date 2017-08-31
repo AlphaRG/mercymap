@@ -1,0 +1,49 @@
+//
+//  PrefixHeader.pch
+//  MercyMap
+//
+//  Created by sunshaoxun on 16/4/13.
+//  Copyright © 2016年 Wispeed. All rights reserved.
+//
+
+#ifndef PrefixHeader_pch
+#define PrefixHeader_pch
+
+// Include any system framework and library headers here that should be included in all compilation units.
+// You will also need to set the Prefix Header build setting of one or more of your targets to reference this file.
+
+#endif /* PrefixHeader_pch */
+#import "FMDB.h"
+#import "AFNetworking.h"
+#import "MBProgressHUD.h"
+#import "UIView+Extend.h"
+#import "EzSystemInfo.h"
+#import "TimeTool.h"
+#import "NSString+Ext.h"
+#import <AssetsLibrary/AssetsLibrary.h>
+#import "CommoneTools.h"
+#import <UIKit/UIKit.h>
+#import <Foundation/Foundation.h>
+#import "ImageTool.h"
+#import "UITableView+Common.h"
+#import "UIViewController+TableViewCellSepratorLine.h"
+#import "UITableView+RegiesterCell.h"
+#import "UIImageView+WebCache.h"
+
+#define kSCREENWIDTH [UIScreen mainScreen].bounds.size.width
+#define kSCREENHEIGTH [UIScreen mainScreen].bounds.size.height
+
+//接口
+#define  URLM     [[NSUserDefaults standardUserDefaults]objectForKey:@"mercymapURL"]
+#define  USERURL  [[NSUserDefaults standardUserDefaults]objectForKey:@"userURL"]
+#define  IMGURL   [[NSUserDefaults standardUserDefaults]objectForKey:@"imgURL"]
+
+
+//#define pictureUrl @"http://www.wispeed.com/uploadfiles/"
+
+//获取验证码
+#define appkey @"11afb9fde4c22"
+#define appsecret @"4a87cdb87a20edb548be456dbab1daa0"
+#define umengkey @"5760be2367e58e334f003e5c"
+#define Client
+

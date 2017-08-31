@@ -1,0 +1,33 @@
+//
+//  MapViewSet.h
+//  MercyMap
+//
+//  Created by sunshaoxun on 16/5/25.
+//  Copyright © 2016年 Wispeed. All rights reserved.
+//
+
+#import <Foundation/Foundation.h>
+#import<MAMapKit/MAMapKit.h>
+#import <MapKit/MapKit.h>
+#import <AMapLocationKit/AMapLocationKit.h>
+#import "LoginService.h"
+#import <UIKit/UIKit.h>
+@interface MapViewSet : NSObject<AMapLocationManagerDelegate,MAMapViewDelegate>
+{
+    AMapLocationManager *locationManager;
+    NSMutableArray      *MapdataArray;
+    UIViewController    *comeView;
+    MAMapView          *_mapView;
+    LoginService       *_service;
+    int fag ,_dateStr;
+    NSString           *_categoryStr,*_who,*_how;
+}
+@property(nonatomic,strong)NSMutableArray *mapDataArray;
+@property (nonatomic) CLLocationCoordinate2D Mapcoordinate;
+
+@property (nonatomic, copy) AMapLocatingCompletionBlock completionBlock;
+-(void)setcity;
+
+-(void)rightBtnClick:(CLLocationCoordinate2D)mapCoordinate view:(UIViewController *)BackView fag:(int)fag1;
+-(void)setLocationView:(MAMapView *)mapview selfView:(UIViewController*)selfView Category:(NSString *)catrgory Date:(int)dates How:(NSString *)how Who:(NSString *)who;
+@end

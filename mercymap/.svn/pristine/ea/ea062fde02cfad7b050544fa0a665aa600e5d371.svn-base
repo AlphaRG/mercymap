@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="11762" systemVersion="15G1212" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" colorMatched="YES">
+    <device id="retina4_7" orientation="portrait">
+        <adaptation id="fullscreen"/>
+    </device>
+    <dependencies>
+        <deployment identifier="iOS"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="11757"/>
+        <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
+    </dependencies>
+    <objects>
+        <placeholder placeholderIdentifier="IBFilesOwner" id="-1" userLabel="File's Owner" customClass="CreateTableViewController"/>
+        <placeholder placeholderIdentifier="IBFirstResponder" id="-2" customClass="UIResponder"/>
+        <tableViewCell contentMode="scaleToFill" selectionStyle="default" indentationWidth="10" reuseIdentifier="CreateLightImageCell" rowHeight="219" id="KGk-i7-Jjw" customClass="CreateLightImageCell">
+            <rect key="frame" x="0.0" y="0.0" width="320" height="219"/>
+            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+            <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" tableViewCell="KGk-i7-Jjw" id="H2p-sc-9uM">
+                <rect key="frame" x="0.0" y="0.0" width="320" height="218"/>
+                <autoresizingMask key="autoresizingMask"/>
+                <subviews>
+                    <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="添加副图片" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="oeR-jl-wdQ">
+                        <rect key="frame" x="82" y="110" width="100" height="20"/>
+                        <constraints>
+                            <constraint firstAttribute="height" constant="20" id="JKT-FI-wtG"/>
+                            <constraint firstAttribute="width" constant="100" id="ofm-X8-TTq"/>
+                        </constraints>
+                        <fontDescription key="fontDescription" name="PingFangTC-Regular" family="PingFang TC" pointSize="14"/>
+                        <color key="textColor" red="0.66666666666666663" green="0.66666666666666663" blue="0.66666666666666663" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                        <nil key="highlightedColor"/>
+                    </label>
+                    <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="VvQ-md-8Ht" customClass="SYMGridView">
+                        <rect key="frame" x="17" y="95" width="283" height="103.5"/>
+                    </view>
+                    <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="left" contentVerticalAlignment="center" lineBreakMode="middleTruncation" hasAttributedTitle="YES" translatesAutoresizingMaskIntoConstraints="NO" id="dEJ-et-WrM">
+                        <rect key="frame" x="17" y="5" width="143" height="80"/>
+                        <constraints>
+                            <constraint firstAttribute="height" constant="80" id="3Gy-fe-gQb"/>
+                            <constraint firstAttribute="width" constant="143" id="PyI-6x-93s"/>
+                        </constraints>
+                        <size key="titleShadowOffset" width="2.2250738585072014e-308" height="0.0"/>
+                        <state key="normal" image="create_addImage.jpg">
+                            <attributedString key="attributedTitle">
+                                <fragment content="添加主图">
+                                    <attributes>
+                                        <font key="NSFont" size="14" name="PingFangSC-Ultralight"/>
+                                        <paragraphStyle key="NSParagraphStyle" alignment="right" lineBreakMode="wordWrapping" baseWritingDirection="natural" tighteningFactorForTruncation="0.0"/>
+                                    </attributes>
+                                </fragment>
+                            </attributedString>
+                        </state>
+                        <connections>
+                            <action selector="addBigImage:" destination="-1" eventType="touchUpInside" id="Z1E-Kb-ZhC"/>
+                        </connections>
+                    </button>
+                </subviews>
+                <constraints>
+                    <constraint firstAttribute="bottom" secondItem="VvQ-md-8Ht" secondAttribute="bottom" constant="20" id="AiR-vf-AmC"/>
+                    <constraint firstItem="VvQ-md-8Ht" firstAttribute="top" secondItem="dEJ-et-WrM" secondAttribute="bottom" constant="10" id="DXE-jj-NLP"/>
+                    <constraint firstItem="VvQ-md-8Ht" firstAttribute="leading" secondItem="dEJ-et-WrM" secondAttribute="leading" id="FTp-cH-c6H"/>
+                    <constraint firstItem="dEJ-et-WrM" firstAttribute="leading" secondItem="H2p-sc-9uM" secondAttribute="leading" constant="17" id="QD2-IU-5uw"/>
+                    <constraint firstAttribute="trailing" secondItem="VvQ-md-8Ht" secondAttribute="trailing" constant="20" id="XOf-wL-0wN"/>
+                    <constraint firstItem="dEJ-et-WrM" firstAttribute="top" secondItem="H2p-sc-9uM" secondAttribute="top" constant="5" id="ZQb-Ab-muS"/>
+                    <constraint firstItem="oeR-jl-wdQ" firstAttribute="top" secondItem="VvQ-md-8Ht" secondAttribute="top" constant="15" id="l67-l5-0Yq"/>
+                    <constraint firstItem="oeR-jl-wdQ" firstAttribute="leading" secondItem="H2p-sc-9uM" secondAttribute="leading" constant="82" id="lHR-7c-Cfx"/>
+                </constraints>
+            </tableViewCellContentView>
+            <connections>
+                <outlet property="bigImg" destination="dEJ-et-WrM" id="flN-zp-SAP"/>
+                <outlet property="gridView" destination="VvQ-md-8Ht" id="GPr-9O-61v"/>
+                <outlet property="imgWidth" destination="PyI-6x-93s" id="03A-n4-Z7G"/>
+                <outlet property="tipsLabel" destination="oeR-jl-wdQ" id="8Iz-Ca-bJr"/>
+            </connections>
+            <point key="canvasLocation" x="259" y="213.5"/>
+        </tableViewCell>
+    </objects>
+    <resources>
+        <image name="create_addImage.jpg" width="64" height="64"/>
+    </resources>
+</document>

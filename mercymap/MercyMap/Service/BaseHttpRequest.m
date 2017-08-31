@@ -1,0 +1,147 @@
+//
+//  BaseHttpRequest.m
+//  MercyMap
+//
+//  Created by sunshaoxun on 16/4/14.
+//  Copyright © 2016年 Wispeed. All rights reserved.
+#import "BaseHttpRequest.h"
+#import "AFNetworking.h"
+#import "JSONKit.h"
+#import "UIImage+Addition.h"
+#import "Single.h"
+@implementation BaseHttpRequest
+-(AFNetworkReachabilityStatus)netStatus{
+    AFNetworkReachabilityManager *manager = [AFNetworkReachabilityManager sharedManager];
+    return manager.networkReachabilityStatus;
+}
+
+-(void)sendRequestHttp:(NSString *)url parameters:(NSDictionary *)dic Success:(RequestSuccessBlock)successBlock Failuer:(RequestFaileBlock)errorBlock
+{
+    AFHTTPRequestOperationManager *manager = [AFHTTPRequestOperationManager manager];
+    manager.requestSerializer = [AFHTTPRequestSerializer serializer];
+    manager.responseSerializer =[AFHTTPResponseSerializer serializer];
+    
+    manager.securityPolicy.allowInvalidCertificates = YES;
+    [manager POST:url parameters:dic success:^(AFHTTPRequestOperation *operation, id responseObject) {
+        NSData *data = (NSData *)responseObject;
+        NSString *str =[[NSString alloc]initWithData:data encoding:NSUTF8StringEncoding];
+        NSDictionary *dic1 =(NSDictionary *)[str objectFromJSONString];
+        successBlock(dic1);
+    } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
+        errorBlock(error.description);
+    }];
+}
+
+-(void)sendRequestHttpGet:(NSString *)url parameters:(NSDictionary *)dic Success:(RequestSuccessBlock)successBlock Failuer:(RequestFaileBlock)errorBlock{
+    AFHTTPRequestOperationManager *manager = [AFHTTPRequestOperationManager manager];
+    manager.requestSerializer = [AFHTTPRequestSerializer serializer];
+    manager.responseSerializer =[AFHTTPResponseSerializer serializer];
+    
+    manager.securityPolicy.allowInvalidCertificates =YES;
+    
+    [manager GET:url parameters:dic success:^(AFHTTPRequestOperation *operation, id responseObject) {
+       NSData *data = (NSData *)responseObject;
+       NSString *str =[[NSString alloc]initWithData:data encoding:NSUTF8StringEncoding];
+       NSDictionary *dic1 = (NSDictionary *)[str objectFromJSONString];
+       successBlock(dic1);
+    } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
+         errorBlock(error.description);
+    }];
+}
+
+-(void)GetSort:(NSString *)url parameters:(NSDictionary *)dic Success:(RequestSuccessBlock)successBlock Failuer:(RequestFaileBlock)errorBlock{
+    AFHTTPRequestOperationManager *manager = [AFHTTPRequestOperationManager manager];
+    manager.requestSerializer = [AFHTTPRequestSerializer serializer];
+    manager.responseSerializer =[AFHTTPResponseSerializer serializer];
+    
+    manager.securityPolicy.allowInvalidCertificates =YES;
+    
+    [manager GET:url parameters:dic success:^(AFHTTPRequestOperation *operation, id responseObject) {
+        NSData *data = (NSData *)responseObject;
+        NSString *str =[[NSString alloc]initWithData:data encoding:NSUTF8StringEncoding];
+        NSDictionary *dic1 = (NSDictionary *)[str objectFromJSONString];
+        successBlock(dic1);
+    } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
+        errorBlock(error.description);
+    }];
+}
+
+
+-(void)sendImage:(NSString *)url Sizeimage:(UIImage *)resizedImage iamgeName:(NSString *)fileName Token:(NSString *)Toekn success:(RequestImageSuccessBlock)success error:(RequestImageFailurBlock)errorBlock
+{
+    AFHTTPRequestOperationManager *manager = [AFHTTPRequestOperationManager manager];
+    manager.requestSerializer = [AFHTTPRequestSerializer serializer];
+    manager.responseSerializer = [AFHTTPResponseSerializer serializer];
+    
+    manager.securityPolicy.allowInvalidCertificates =YES;
+    
+    NSData *imageData = UIImageJPEGRepresentation(resizedImage, 0.5);
+
+    single = [Single Send];
+    NSNumber *uid = [NSNumber numberWithInt:single.ID];
+    NSDictionary *dic =@{
+                       @"Token":Toekn,
+                       @"UID":uid,
+                       @"FormPlatform":@100,
+                       @"ClientType":@10
+                       };
+  [manager POST:url parameters:dic constructingBodyWithBlock:^(id<AFMultipartFormData> formData){
+    [formData appendPartWithFileData:imageData name:@"file" fileName:fileName mimeType:@"image/jpeg"];
+  } success:^(AFHTTPRequestOperation *operation, id responseObject) {
+               NSData *data = (NSData *)responseObject;
+               NSString *str = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
+       
+               NSDictionary *dic = (NSDictionary *)[str objectFromJSONString];
+               NSLog(@"%@",dic[@"OMsg"][@"Msg"]);
+               if ([dic[@"OMsg"][@"Flag"]isEqualToString:@"S"]) {
+                   [SDWebImageManager.sharedManager.imageCache clearMemory];
+                   [SDWebImageManager.sharedManager.imageCache clearDisk];
+                   success(dic[@"uploadPictures"]);
+               }
+               else{
+                   success(dic[@"Omsg"]);
+               }
+   } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
+       errorBlock(error.description);
+   }];
+    
+}
+
+-(void)sendImageurl:(NSString *)url imageArray:(NSArray *)imageArray Token:(NSString *)Token success:(RequestImageSuccessBlock)successBlock Failuer:(RequestImageFailurBlock)errorBlock{
+    single =[Single Send];
+    AFHTTPRequestOperationManager *manager = [AFHTTPRequestOperationManager manager];
+    manager.requestSerializer = [AFHTTPRequestSerializer serializer];
+    manager.responseSerializer = [AFHTTPResponseSerializer serializer];
+    manager.securityPolicy.allowInvalidCertificates =YES;
+    
+    NSDictionary *dic =@{@"Token":single.Token};
+    [manager POST:url parameters:dic constructingBodyWithBlock:^(id<AFMultipartFormData> formData){
+        for (int i = 0; i<imageArray.count; i++) {
+            UIImage * image = imageArray[i];
+            NSData *imageData = UIImageJPEGRepresentation(image, 0.4);
+            NSDateFormatter * formatter = [[NSDateFormatter alloc]init];
+            [formatter setDateFormat:@"yyyy-MM-dd HH-mm-ss"];
+            NSDate * date =[NSDate date];
+            NSString * imageName = [formatter stringFromDate:date];
+            imageName = [imageName stringByReplacingOccurrencesOfString:@" " withString:@""];
+            imageName = [imageName stringByReplacingOccurrencesOfString:@"-" withString:@""];
+            imageName = [NSString stringWithFormat:@"%@%d%d.png",imageName,single.ID,i];
+        [formData appendPartWithFileData:imageData name:@"file" fileName:imageName mimeType:@"image/jpeg"];}
+    } success:^(AFHTTPRequestOperation *operation, id responseObject) {
+        NSData *data = (NSData *)responseObject;
+        NSString *str = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
+        NSDictionary *dic = (NSDictionary *)[str objectFromJSONString];
+        if ([dic[@"OMsg"][@"Flag"]isEqualToString:@"S"]) {
+            [SDWebImageManager.sharedManager.imageCache clearMemory];
+            [SDWebImageManager.sharedManager.imageCache clearDisk];
+            successBlock(dic[@"uploadPictures"]);
+        }
+        else{
+            successBlock(dic[@"Omsg"]);
+        }
+    } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
+        errorBlock(error.description);
+
+     }];
+}
+@end

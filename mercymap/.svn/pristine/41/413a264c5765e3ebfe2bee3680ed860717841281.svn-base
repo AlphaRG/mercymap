@@ -1,0 +1,17 @@
+# Uncomment the next line to define a global platform for your project
+# platform :ios, '9.0'
+
+target 'MercyMap' do
+ 
+ 
+  target 'MercyMapTests' do
+    inherit! :search_paths
+    # Pods for testing
+  end
+
+  target 'MercyMapUITests' do
+    inherit! :search_paths
+    # Pods for testing
+  end
+
+end
